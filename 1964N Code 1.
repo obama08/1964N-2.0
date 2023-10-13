@@ -1,0 +1,355 @@
+musicMode = () => {
+    // Initialise custom music
+  
+    $("#music_player")[0].children[0].style.display = "none"
+    $("#music_player")[0].children[1].style.display = "none"
+  
+    document.getElementById("modLoadReveal").style.display = "none"
+    document.getElementById("modloaddiv").style.display = "none"
+  
+    musicBox = document.getElementById("music_player")
+    musicBox.style.display = ""
+  
+    var trackSel;
+    e = campaignTrail_temp
+    e.selectedSoundtrack = 0
+  
+    toTime = (seconds) => {
+        var date = new Date(null);
+        date.setSeconds(seconds);
+        return date.toISOString().substr(11, 8);
+    }
+  
+    generateTime = () => {
+        // Get the audio element
+        var audio = document.getElementById("campaigntrailmusic");
+  
+        timeTracker = document.createElement("div");
+        timeTracker.style = `
+  text-align:left;
+  border-style:solid;
+  border-width:3px;
+  height:150px;
+  width:200px;
+  background-color:#999999;
+  float:right;
+  padding: 10px;
+  `
+        $("#trackSelParent")[0].prepend(timeTracker);
+        $("#trackSelParent")[0].prepend(document.createElement("br"));
+  
+        // Create a new element to display the current position of the audio
+        var positionDisplay = document.createElement("gg");
+        positionDisplay.id = "position-display";
+  
+        // Create a new slider element to change the time
+        var timeSlider = document.createElement("input");
+        timeSlider.type = "range";
+        timeSlider.min = 0;
+        timeSlider.max = 1;
+        timeSlider.step = 0.001;
+        timeSlider.value = 0;
+        timeSlider.style.width = "200px";
+        timeSlider.id = "time-slider";
+  
+        var pausePlay = document.createElement("button");
+        pausePlay.id = "position-display";
+        pausePlay.innerHTML = "<b>Pause</b>"
+        pausePlay.style.width = "100%";
+  
+  
+        pausePlay.addEventListener("click", event => {
+            event.preventDefault();
+            updatePositionDisplay();
+            let audio = document.getElementById("campaigntrailmusic");
+            if (audio.paused) {
+                audio.play();
+                event.target.innerHTML = "<b>Pause</b>";
+                return;
+            }
+            audio.pause();
+            event.target.innerHTML = "<b>Play</b>";
+            return;
+        })
+  
+        var volumeLabel = document.createElement("gg");
+        volumeLabel.id = "volume-label";
+        volumeLabel.innerHTML = "<br><b>Volume: </b>"
+  
+        var volumeSlider = document.createElement("input");
+        volumeSlider.type = "range";
+        volumeSlider.min = 0;
+        volumeSlider.max = 1;
+        volumeSlider.step = 0.001;
+        volumeSlider.value = 0;
+        volumeSlider.style.width = "200px";
+        volumeSlider.id = "volume-slider";
+  
+        volumeSlider.value = audio.volume;
+  
+        timeTracker.appendChild(pausePlay);
+        timeTracker.appendChild(document.createElement("br"));
+        timeTracker.appendChild(document.createElement("br"));
+        timeTracker.appendChild(positionDisplay);
+        timeTracker.appendChild(timeSlider);
+        timeTracker.appendChild(volumeLabel);
+        timeTracker.appendChild(volumeSlider);
+  
+        updatePositionDisplay();
+  
+        //for (let i = 0; i < 10; i++)
+        //timeTracker.append(document.createElement("br"));
+  
+  
+        // Function to update the position display
+        function updatePositionDisplay() {
+            positionDisplay.innerHTML = "<b>Time:</b> " + toTime(audio.currentTime) + "<br>";
+            timeSlider.value = audio.duration ? audio.currentTime / audio.duration : 0;
+        }
+  
+        // Function to change the time of the audio
+        function changeTime() {
+            positionDisplay.innerHTML = "<b>Time:</b> " + toTime(audio.currentTime) + "<br>";
+            audio.currentTime = timeSlider.value * audio.duration;
+        }
+  
+        updateVolume = event => {
+            audio.volume = event.target.value;
+        }
+  
+        // Update the position display and slider every second
+        setInterval(updatePositionDisplay, 1000);
+  
+        // Listen for changes to the time slider and change the time of the audio
+        timeSlider.addEventListener("input", changeTime);
+        volumeSlider.addEventListener("input", updateVolume)
+    }
+  
+    function newMusicPlayer() {
+        trackSel = document.createElement("div");
+        trackSel.id = "trackSelParent"
+        let z = `<br><br><br><br><br><br><br><br><br><br><div id='trackSel' style="text-align:left;border-style:solid;border-width:3px;overflow-y: scroll;overflow-x: hidden;height:200px; width:400px;background-color:#999999;float:right;">`
+        z += `<b><select id='selectSoundtrack'><option value='` + soundtracks[e.selectedSoundtrack].name + `'>` + soundtracks[e.selectedSoundtrack].name + "</option>"
+        for (i in soundtracks) {
+            if (soundtracks[e.selectedSoundtrack] != soundtracks[i]) {
+                z += `<option value='` + soundtracks[i].name + `'>` + soundtracks[i].name + `</option>`
+            }
+        }
+        z += `</select></b><br><br>`
+            // <label><input type="radio" name="option" value="option1">Option 1</label><br>
+        for (i in soundtracks[e.selectedSoundtrack].tracklist) {
+            let a = soundtracks[e.selectedSoundtrack].tracklist[i]
+            let b = `<label><input class="trackSelector" type="radio" name="trackSelector" value="` + i + `">` + a.name + `</label><br>`
+            z += b
+        }
+        z += "</div><br><br>"
+        trackSel.innerHTML = z
+  
+        // select correct song
+  
+        musicBox.appendChild(trackSel);
+        Array.from(document.getElementById("trackSel").children).filter(f => {
+            return f.tagName == "LABEL"
+        }).map(f => f.children[0])[0].checked = true
+  
+        // set soundtrack changer
+  
+        soundtrackSelector = document.getElementById("selectSoundtrack")
+        soundtrackSelector.onchange = function() {
+            for (i in soundtracks) {
+                if (soundtracks[i].name == soundtrackSelector.value) {
+                    e.selectedSoundtrack = i
+                    break
+                }
+            }
+            document.getElementById("trackSelParent").remove()
+            newMusicPlayer()
+        }
+  
+        var matches = document.querySelectorAll('.trackSelector');
+  
+        for (match in matches) {
+            matches[match].onchange = function() {
+                audio = $("#campaigntrailmusic")[0];
+                audio.src = soundtracks[e.selectedSoundtrack].tracklist[this.value].url
+                audio.currentTime = 0
+            }
+        }
+  
+        musicBox.children[2].loop = false
+        musicBox.children[2].src = soundtracks[e.selectedSoundtrack].tracklist[0].url
+  
+        musicBox.children[2].onended = function() {
+            console.log("next track")
+            let selected = Number(document.querySelector('input[name="trackSelector"]:checked').value);
+            let newSel = clamp(selected + 1, soundtracks[e.selectedSoundtrack].tracklist.length - 1, 0)
+            let buttons = Array.from(document.getElementById("trackSel").children).filter(f => {
+                    return f.tagName == "LABEL"
+                }).map(f => f.children[0])
+                //let selectedIndex = buttons.map(f=>f.children[0]).map(f=>f.checked)
+            buttons[newSel].click()
+        }
+  
+        for (w = 0; w < 7; w++) {
+            document.getElementById("trackSelParent").appendChild(document.createElement("br"))
+        }
+  
+        generateTime();
+    }
+  
+    clamp = function(a, max, min, overflow = true) {
+        if (overflow) {
+            return a > max ? min : a < min ? max : a;
+        }
+        return a > max ? max : a < min ? min : a;
+    }
+  
+  
+    // Track list
+  
+    var soundtracks = {
+        0: {
+            name: "1964N Official Soundtrack - Nixon Nights",
+            tracklist: [
+              {
+                "name": "More Than Ever - Mike Curb Congregation",
+                "url": "https://drive.google.com/uc?id=1h-JKUvZG63HJM4PY7O4IsVJd-x0zXrzq"
+              },
+              {
+                "name": "Don’t Back Down - The Beach Boys",
+                "url": "https://drive.google.com/uc?id=16t0ySZVslxSKgV8DSOZWFG20u6qGJnzk"
+              },
+              {
+                "name": "Go Vote Nixon and Lodge! - The Clancy Hayes Dixieland Band",
+                "url": "https://drive.google.com/uc?id=1FOu-jS3ocZsrpX9goJ8kcC8wg9Z2mmcO"
+            },
+            {
+                "name": "No Particular Place to Go - Chuck Berry",
+                "url": "https://drive.google.com/uc?id=1idltyBjmOaKirHapmHsQo1u2diXmk4mq"
+              },
+              {
+                "name": "Chug-a-Lug - Roger Miller",
+                "url": "https://drive.google.com/uc?id=1w0nON4RAJN5rosbZsN_6EWykNAdP1f6D"
+              },
+              {
+                "name": "Keep On Pushing - The Impressions",
+                "url": "https://drive.google.com/uc?id=1XFSTh3D_bMpdcrBjYIsuZVKslp1aUgiE"
+              },
+              {
+                "name": "Can’t Buy Me Love (Take 1-2 Edit) - The Beatles",
+                "url": "https://drive.google.com/uc?id=1mfw7FzPY9Ew9v2rYTFbem787feI-XCxL"
+              }
+          ]
+       },
+        1: {
+          name: "1964N Official Soundtrack - Clement’s Sunday",
+          tracklist: [
+            {
+              "name": "What About Frank Clement (A Mighty Man) - The Prisonaires",
+              "url": "https://drive.google.com/uc?id=1qpnTsJaeGQZzWfaiF7sUGJMnAa1fpYyE"
+            },
+            {
+              "name": "Dance, Dance, Dance - The Beach Boys",
+              "url": "https://drive.google.com/uc?id=1LVpPSpWHWyAXEHmvcMzdlMHAYYoV7dUy"
+            },
+            {
+              "name": "The Ballad of Frank Clement - Cowboy Copas",
+              "url": "https://drive.google.com/uc?id=1kZqsj4iZWwQ6TzeEvhHPhj8EICEA1guZ"
+            },
+            {
+              "name": "Hello, Dolly! - Louis Armstrong",
+              "url": "https://drive.google.com/uc?id=16Z6wtrtuAZkfqSEC1L9MAjrx1T2yb1su"
+            },
+            {
+              "name": "Send Me Some Lovin’ - Sam Cooke",
+              "url": "https://drive.google.com/uc?id=1JWe12iqmnhl5IE2iMyZkUs2kYLz2yYj8"
+            },
+            {
+              "name": "Money (That’s What I Want) - The Kingsmen",
+              "url": "https://drive.google.com/uc?id=1vX49GwhWwDnfioWOPGpToF45VG_7-iLP"
+            },
+            {
+              "name": "Eight Days A Week - The Beatles",
+              "url": "https://drive.google.com/uc?id=1Sc5MMXw2WMNR6aCd62KSEgq-whFOrNPE"
+            }
+          ]
+        }
+        
+        
+    }
+
+  
+    // Set up new music player
+  
+    newMusicPlayer()
+  
+
+}
+
+  $("#game_start").click((event) => {
+    event.preventDefault();
+    $("#election_id_button").click((event) => {
+        musicMode()
+
+        setInterval(changeFontColour, 200)
+  
+    })
+  })
+
+
+e = campaignTrail_temp;
+
+document.getElementById("header").src = "https://i.imgur.com/1rnB5cH.png"
+
+nct_stuff.themes[nct_stuff.selectedTheme].coloring_title = "#08041A"
+
+nct_stuff.themes[nct_stuff.selectedTheme].coloring_window = "#393647"
+
+document.getElementsByClassName("game_header")[0].style.backgroundColor = 
+nct_stuff.themes[nct_stuff.selectedTheme].coloring_title
+
+ $("#game_window")[0].style.borderColor = "#772D2F"
+
+$(".footer a").css({"color":"#ffffff"});
+nct_stuff.themes[nct_stuff.selectedTheme].text_col = "#ffffff"
+
+let style = document.createElement('style');
+style.type = 'text/css';
+style.id = 'dynamic-style';
+
+style.innerHTML = `
+  .campaign_trail_start_emphasis {
+    background-color: #393647;
+  }
+  a:-webkit-any-link {
+  	color: #000000;
+  }
+`;
+
+document.head.appendChild(style);
+ 
+$(".container")[0].style.backgroundColor = "#AD2D2F"
+
+$("#game_window")[0].style.backgroundImage = "url(https://i.imgur.com/JNLHvJs.png)"
+
+$("#game_window")[0].style.backgroundSize = "cover"; 
+
+document.body.background = "https://i.imgur.com/LPyaChZ.png"
+
+
+            e.election_json = [{"model":"campaign_trail.election","pk":9,"fields":{"year":2000,"summary":"The United States of America in 1964 stands as possibly the most prosperous country in the world. Despite this, the nation continues to unravel on the issues of civil rights.</p><ul><li> President Richard Nixon is well on track to win re-election after a popular first term, but still must convince the American people that his views on Civil Rights and Foreign Policy are worthy of their support. Can Nixon secure 16-years of consecutive Republicans in the White House?</p><ul><li> Frank G. Clement, the populist Governor of Tennessee, emerged as the dark horse compromise candidate following a chaotic DNC, and must find a way to quickly close the gap with Nixon. Can Clement pull off the biggest upset since Truman defeated Dewey?<p>","image_url":"https://i.imgur.com/a2XMZa3.png","winning_electoral_vote_number":270,"advisor_url":"https://i.imgur.com/UIZFYOI.png","recommended_reading":"<ul>\n<li><a href=https://www.chicagotribune.com/opinion/editorials/ct-edit-chicago-tribune-biden-endorsement-20200925-lnyxsb5qvrftnjjmj3rnzj33jy-story.html>Our Case For Joe Biden</a></li>\n<li><a href=https://nationalinterest.org/feature/case-trump-166808>The Case For Trump</a></li>\n<li><a href=https://www.npr.org/2020/11/18/935730100/how-biden-won-ramping-up-the-base-and-expanding-margins-in-the-suburbs>How Biden Won: Ramping Up The Base And Expanding Margins In The Suburbs</a></li>\n<li><a href=https://www.prospectmagazine.co.uk/politics/donald-trump-joe-biden-us-election-almost-win-votes-concede>Why Did Trump Almost Win?</a></li>\n<li><a href=https://www.hoover.org/research/no-evidence-voter-fraud-guide-statistical-claims-about-2020-election>No Evidence For Voter Fraud: A Guide To Statistical Claims About The 2020 Election</a></li>\n</ul>","has_visits":1,"no_electoral_majority_image":"../static/images/2012-no-majority.jpg"}}];e.temp_election_list = [{"id":9,"year":1964,"is_premium":0,"display_year":"1964N"}];e.credits = ".theanswerisme and /u/ARC-7652";e.global_parameter_json = [{"model":"campaign_trail.global_parameter","pk":1,"fields":{"vote_variable":1.125,"max_swing":0.12,"start_point":0.94,"candidate_issue_weight":10,"running_mate_issue_weight":3,"issue_stance_1_max":-0.71,"issue_stance_2_max":-0.3,"issue_stance_3_max":-0.125,"issue_stance_4_max":0.125,"issue_stance_5_max":0.3,"issue_stance_6_max":0.71,"global_variance":0.01,"state_variance":0.005,"question_count":25,"default_map_color_hex":"#C9C9C9","no_state_map_color_hex":"#999999"}}];e.candidate_json = [{"model":"campaign_trail.candidate","pk":77,"fields":{"first_name":"Richard","last_name":"Nixon","election":9,"party":"Republican","state":"California","priority":1,"description":"<div style='overflow-y:scroll;height:200px;'><p><i>’’A man is not finished when he's defeated. He's finished when he quits.’’</i></p><p>If you had asked anyone what they thought about Richard Milhous Nixon after the Checkers scandal, they would’ve said his political career was over. If you would’ve asked them about it after the 1960 Presidential debate, they would’ve said that he would never occupy the Oval Office, always destined to be in second place or as a lapdog to a much more popular politician. Yet, Nixon enters this election as the 35th and current President of the United States, enjoying popularity that rivals that of Dwight Eisenhower himself during his first term.</p><p> Domestically, Nixon has governed in a vein not entirely dissimilar to Eisenhower, with a strong focus on reforming programs such as welfare in order to reduce fiscal bloat while keeping the original intention of the program. Another area where Nixon has seen domestic success was that of Civil Rights, where his administration successfully lobbied Congress to pass the 24th Amendment, outlawing poll taxes in the South. In terms of foreign policy, his administration successfully orchestrated a coup in Cuba against Fidel Castro's Communist-aligned government, effectively making Cuba a United States puppet state. Another foreign policy challenge is the looming 'second Indochina War,' where staunch anti-Communists push for increased commitment, a stance met with some reluctance by the President.</p><p>With a robust economy, high approval rating, and the likelihood of an irrelevant opponent, it seems like it would take divine intervention to stop Nixon’s crusade.</p>","color_hex":"#b22b27","secondary_color_hex":null,"is_active":1,"image_url":"https://i.imgur.com/AAMeLB9.png","electoral_victory_message":"<h3>REAL PATRIOT DUMMY EXAMPLE SWEEPS</h3>","electoral_loss_message":"<h3>Fake News?</h3>","no_electoral_majority_message":"<h3>DUMMY EXAMPLE RETURNS TO HELL</h3>","description_as_running_mate":null,"candidate_score":1,"running_mate":false,"scrollable":false}},{"model":"campaign_trail.candidate","pk":81,"fields":{"first_name":"Henry Cabot","last_name":"Lodge","election":9,"party":"Republican","state":"Massachussetts","priority":1,"description":"<div style='overflow-y:scroll;height:200px;'><p><i>’’It is never right to compromise with dishonesty.’’</i></p><p><p> In many ways, Henry Cabot Lodge Jr., once a State House Rep, Senator, and Ambassador to the United Nations, could not be more different to Richard Nixon. While Nixon grew up in a dirt-poor Quaker family on the West Coast, Lodge grew up in affluence on the East Coast. While Nixon attended the hometown Whittier College, Lodge graduated cum laude from the prestigious Harvard. While Nixon was denied from the Franklins sorority for not having a prominent-enough name, Lodge grew up in a family that included Senators and Governors, not to mention the fact that he was named after his grandfather, the first-ever Senate Majority Leader. Despite all of this, the two former military men, finding common ground as members of the Eisenhower administration, joined forces in order to beat Jack Kennedy in 1960. </p><p> Despite his somewhat independent tendencies in 1960, Lodge has been a loyal Vice President, supporting your advances on Civil Rights and welfare. As the standard-bearer for liberal Republicanism in the country, his place on the ticket will no doubt once again be an asset in the Northeast and amongst more liberal voters, but would likely severely hamper your performance in the South, as well as amongst the more staunch conservatives within your own party, who are currently supporting a long-shot bid to replace him on the ticket. Still, who would those Republican reactionaries vote for? The party who passed the New Deal?</p>","color_hex":"#0000ff","secondary_color_hex":null,"is_active":0,"image_url":"https://i.imgur.com/QUsni2E.jpg","electoral_victory_message":"<h3>REAL PATRIOT DUMMY EXAMPLE SWEEPS</h3>","electoral_loss_message":"<h3>Fake News?</h3>","no_electoral_majority_message":"<h3>DUMMY EXAMPLE RETURNS TO HELL</h3>","description_as_running_mate":"<div style='overflow-y:scroll;height:200px;'><p><i>’’It is never right to compromise with dishonesty.’’</i></p><p><p> In many ways, Henry Cabot Lodge Jr., once a State House Rep, Senator, and Ambassador to the United Nations, could not be more different to Richard Nixon. While Nixon grew up in a dirt-poor Quaker family on the West Coast, Lodge grew up in affluence on the East Coast. While Nixon attended the hometown Whittier College, Lodge graduated cum laude from the prestigious Harvard. While Nixon was denied from the Franklins sorority for not having a prominent-enough name, Lodge grew up in a family that included Senators and Governors, not to mention the fact that he was named after his grandfather, the first-ever Senate Majority Leader. Despite all of this, the two former military men, finding common ground as members of the Eisenhower administration, joined forces in order to beat Jack Kennedy in 1960. </p><p> Despite his somewhat independent tendencies in 1960, Lodge has been a loyal Vice President, supporting your advances on Civil Rights and welfare. As the standard-bearer for liberal Republicanism in the country, his place on the ticket will no doubt once again be an asset in the Northeast and amongst more liberal voters, but would likely severely hamper your performance in the South, as well as amongst the more staunch conservatives within your own party, who are currently supporting a long-shot bid to replace him on the ticket. Still, who would those Republican reactionaries vote for? The party who passed the New Deal?</p>","candidate_score":1,"running_mate":true,"scrollable":false,"partner":"0"}},{"model":"campaign_trail.candidate","pk":199,"fields":{"first_name":"William C.","last_name":"Cramer","election":9,"party":"Republican","state":"Florida","priority":1,"description":"<div style='overflow-y:scroll;height:200px;'><p><i>’’Time and circumstance often measure a man's future. Quite often if you aspire to something, it becomes more unattainable because you are seeking it.’’</i></p><p><p> William Cato Cramer has somehow stumbled into the role of the anti-Lodge candidate at the Republican National Convention. As the sole Republican Congressman from Florida, representing St. Petersburg, Cramer, despite being a former Democrat, is certainly further to the right than Vice President Lodge on both fiscal issues and civil rights, voting against both Eisenhower-era Civil Rights Acts. Still, most of his positions would not be unpalatable to Republican voters. </p><p> Dropping Lodge and directing the convention to vote for Cramer as your running mate would undoubtedly be controversial. Lodge is immensely popular, perfectly loyal, and is viewed by many voters as your natural successor in 1968. Furthermore, Liberal Republicans in the North would feel nothing short of betrayed, and Congressman Cramer himself isn't a particularly invigorating or popular character in the party.  Despite all of this, Cramer could seriously help margins in the South, and would all but ensure victory in the Sunshine State. With polls indicating that you’ll be assured re-election regardless of who you pick, perhaps it’s time for the Republican Party to evolve into something new.","color_hex":"#0000ff","secondary_color_hex":null,"is_active":0,"image_url":"https://i.imgur.com/lqkcM4L.jpg","electoral_victory_message":"<h3>REAL PATRIOT DUMMY EXAMPLE SWEEPS</h3>","electoral_loss_message":"<h3>Fake News?</h3>","no_electoral_majority_message":"<h3>DUMMY EXAMPLE RETURNS TO HELL</h3>","description_as_running_mate":"<div style='overflow-y:scroll;height:200px;'><p><i>’’Time and circumstance often measure a man's future. Quite often if you aspire to something, it becomes more unattainable because you are seeking it.’’</i></p><p><p> William Cato Cramer has somehow stumbled into the role of the anti-Lodge candidate at the Republican National Convention. As the sole Republican Congressman from Florida, representing St. Petersburg, Cramer, despite being a former Democrat, is certainly further to the right than Vice President Lodge on both fiscal issues and civil rights, voting against both Eisenhower-era Civil Rights Acts. Still, most of his positions would not be unpalatable to Republican voters. </p><p> Dropping Lodge and directing the convention to vote for Cramer as your running mate would undoubtedly be controversial. Lodge is immensely popular, perfectly loyal, and is viewed by many voters as your natural successor in 1968. Furthermore, Liberal Republicans in the North would feel nothing short of betrayed, and Congressman Cramer himself isn't a particularly invigorating or popular character in the party.  Despite all of this, Cramer could seriously help margins in the South, and would all but ensure victory in the Sunshine State. With polls indicating that you’ll be assured re-election regardless of who you pick, perhaps it’s time for the Republican Party to evolve into something new.","candidate_score":1,"running_mate":true,"scrollable":false,"partner":"0"}},{"model":"campaign_trail.candidate","pk":78,"fields":{"first_name":"Frank","last_name":"Clement","election":9,"party":"Democratic","state":"Tennessee","priority":1,"description":"<div style='overflow-y:scroll;height:200px;'><p><i>’’There are three qualities we American people must require in our leaders. First is character. Second is ability, for without it, character may be misused. Third is diplomacy, without which character and ability might be wasted.’’</i></p><p>Governor Frank Goad Clement of Tennessee should not be here. </p><p> After running simply in an attempt to boost his national name recognition in anticipation for a planned run for the US Senate, Clement watched as the entire potential field either declined to run or dropped out due to scandal. Following Jack Kennedy and Lyndon Johnson’s refusals to run, the nomination was left wide open, allowing for Clement to clinch the nomination on the 17th ballot, thanks to an uneasy alliance between Clement’s base, segregationists who initially supported Orval Faubus, and Westerners who previously backed Pat Brown, coming together to deny Hubert Humphrey the nomination.</p><p>Clement isn’t exactly an A-list candidate, but he isn’t a complete unknown, either; the governor is perhaps most renowned for his memorable keynote address at the 1956 Democratic Convention, delivered with a theatrical, almost Bryan-esque flair at the Chicago International Amphitheatre. Although his sermon-like speech served to strengthen his bond with the rural, religious, and working-class constituents in his home state and across the American heartland, it was panned by the media, Republican partisans, and even the establishment of his own party, leading to many predicting that his career in federal politics was dead. Perhaps they will be proven right after this election.</p><p>The governor finds himself in a challenging position currently, trailing President Nixon in every single poll. His campaign is not one that seeks to win, rather, it’s one that aims to keep the fragile Democratic coalition together for yet another cycle until the party once again tries to find an opening in the Republican machine in 1968. Still, that’s easier said than done; Clement must find a way to stop the bleeding of Black voters from the Democratic Party while ensuring that there is no Southern splinter candidacy, as well as attempting to hold previous Democrat margins in both the cities and the rurals. If Clement is able to pull this off, however, he may be able to give Tricky Dick an ever-so-slight scare.</p>","color_hex":"#1E48D7","secondary_color_hex":null,"is_active":1,"image_url":"https://i.imgur.com/S7dchN8.png","electoral_victory_message":"<h3>REAL PATRIOT DUMMY EXAMPLE SWEEPS</h3>","electoral_loss_message":"<h3>Fake News?</h3>","no_electoral_majority_message":"<h3>DUMMY EXAMPLE RETURNS TO HELL</h3>","description_as_running_mate":null,"candidate_score":1,"running_mate":false,"scrollable":false}},{"model":"campaign_trail.candidate","pk":85,"fields":{"first_name":"Abraham","last_name":"Ribicoff","election":9,"party":"Democratic","state":"Connecticut","priority":1,"description":"<div style='overflow-y:scroll;height:200px;'><p><i>’’My greatest ambition is to leave the world a little better place than when I found it.’’</i></p><p><p>If you want to find a running mate that both fits your populist persona while mollifying the establishment, then Abraham Alexander Ribicoff is your man. Born and raised in Connecticut, Ribicoff has served as a State Representative, Police Court Judge, Congressman, Governor, and, thanks to the blue wave in 1962, US Senator. As a friend of both the Kennedys and Lyndon Johnson, Ribicoff would certainly help you in your attempt to hold the coalition of voters that backed the Democratic ticket 4 years ago.</p><p>Ribicoff would certainly help you in the Northeast, his staunch liberal views on spending and social issues paired with his commitment to internationalism is broadly appealing to his home region. However, these very same views will likely hurt you in the South. Furthermore, Ribicoff’s Jewish faith will likely do more harm than good to your ticket; while it may help in New York, the country is majority Christian, and given the recent decision of the Supreme Court to outlaw mandatory school prayer, some more reactionary groups may use his selection to stoke fear about what direction your administration might take in regards to religion. Ribicoff is also a strong supporter of Civil Rights, which would worsen your appeal with voters in the region. A Northern liberal religious minority who supported Civil Rights legislation didn’t exactly play well with white Southerners in the region 4 years ago. Still, if you want voters to associate your campaign with Democratic tickets of the past, Ribicoff is probably the man for the job.</p>","color_hex":"#0000ff","secondary_color_hex":null,"is_active":0,"image_url":"https://i.imgur.com/tzkjhDg.jpg","electoral_victory_message":"<h3>REAL PATRIOT DUMMY EXAMPLE SWEEPS</h3>","electoral_loss_message":"<h3>Fake News?</h3>","no_electoral_majority_message":"<h3>DUMMY EXAMPLE RETURNS TO HELL</h3>","description_as_running_mate":"<div style='overflow-y:scroll;height:200px;'><p><i>’’My greatest ambition is to leave the world a little better place than when I found it.’’</i></p><p><p>If you want to find a running mate that both fits your populist persona while mollifying the establishment, then Abraham Alexander Ribicoff is your man. Born and raised in Connecticut, Ribicoff has served as a State Representative, Police Court Judge, Congressman, Governor, and, thanks to the blue wave in 1962, US Senator. As a friend of both the Kennedys and Lyndon Johnson, Ribicoff would certainly help you in your attempt to hold the coalition of voters that backed the Democratic ticket 4 years ago.</p><p>Ribicoff would certainly help you in the Northeast, his staunch liberal views on spending and social issues paired with his commitment to internationalism is broadly appealing to his home region. However, these very same views will likely hurt you in the South. Furthermore, Ribicoff’s Jewish faith will likely do more harm than good to your ticket; while it may help in New York, the country is majority Christian, and given the recent decision of the Supreme Court to outlaw mandatory school prayer, some more reactionary groups may use his selection to stoke fear about what direction your administration might take in regards to religion. Ribicoff is also a strong supporter of Civil Rights, which would worsen your appeal with voters in the region. A Northern liberal religious minority who supported Civil Rights legislation didn’t exactly play well with white Southerners in the region 4 years ago. Still, if you want voters to associate your campaign with Democratic tickets of the past, Ribicoff is probably the man for the job.</p>","candidate_score":1,"running_mate":true,"scrollable":false,"partner":"3"}},{"model":"campaign_trail.candidate","pk":1006,"fields":{"first_name":"Gordon","last_name":"Gray","election":9,"party":"Democratic","state":"Maryland","priority":1,"description":"<div style='overflow-y:scroll;height:200px;'><p><i>’’Never answer the question that is asked of you. Answer the question that you wish had been asked of you.’’</i></p><p><p><p>A former member of the Truman, Eisenhower, and Nixon administration, it wouldn’t take long to find the fingerprints of Gordon Gray on the Department of Defense. A former businessman, lawyer, State Representative, and army man, Gray has served as Secretary of War, Director of the Office of Defense Mobilization, and National Security Advisor. His biggest position would be saved for his most recent, however, having served as Nixon’s Secretary of Defense for the first 3 years of his administration. So, why is he a possible running mate for you? Well, it turns out that Gray is a bigger hawk than most gave him credit for. Decrying Nixon for refusing to ramp up involvement in South Vietnam, Gray tendered his resignation while the Democratic primaries began to ramp up. While he refused an attempt to draft him into the contest, he is seemingly more than happy to accept the Vice Presidential Nomination.</p><p>The obvious benefit of Gray would be that he would give your credit much stronger foreign policy credentials than you otherwise would have. His storied history in the Department of Defense would be nothing but a boon to your campaign. However, Gray’s only other known political positions are his support of segregation and his opposition to publicly-financed higher education, two things that will likely help you in the South but hurt you everywhere else. Gray also wants control of your campaign’s rhetoric on foreign policy, which means that you likely will have to stand by most things that he says on the campaign trail. If you want a running mate that could cover up most of your own weaknesses, though, Gray should be your first choice.</p>","color_hex":"#0000ff","secondary_color_hex":null,"is_active":0,"image_url":"https://i.imgur.com/fBUY2RJ.png","electoral_victory_message":"<h3>REAL PATRIOT DUMMY EXAMPLE SWEEPS</h3>","electoral_loss_message":"<h3>Fake News?</h3>","no_electoral_majority_message":"<h3>DUMMY EXAMPLE RETURNS TO HELL</h3>","description_as_running_mate":"<div style='overflow-y:scroll;height:200px;'><p><i>’’Never answer the question that is asked of you. Answer the question that you wish had been asked of you.’’</i></p><p><p><p>A former member of the Truman, Eisenhower, and Nixon administration, it wouldn’t take long to find the fingerprints of Gordon Gray on the Department of Defense. A former businessman, lawyer, State Representative, and army man, Gray has served as Secretary of War, Director of the Office of Defense Mobilization, and National Security Advisor. His biggest position would be saved for his most recent, however, having served as Nixon’s Secretary of Defense for the first 3 years of his administration. So, why is he a possible running mate for you? Well, it turns out that Gray is a bigger hawk than most gave him credit for. Decrying Nixon for refusing to ramp up involvement in South Vietnam, Gray tendered his resignation while the Democratic primaries began to ramp up. While he refused an attempt to draft him into the contest, he is seemingly more than happy to accept the Vice Presidential Nomination.</p><p>The obvious benefit of Gray would be that he would give your credit much stronger foreign policy credentials than you otherwise would have. His storied history in the Department of Defense would be nothing but a boon to your campaign. However, Gray’s only other known political positions are his support of segregation and his opposition to publicly-financed higher education, two things that will likely help you in the South but hurt you everywhere else. Gray also wants control of your campaign’s rhetoric on foreign policy, which means that you likely will have to stand by most things that he says on the campaign trail. If you want a running mate that could cover up most of your own weaknesses, though, Gray should be your first choice.</p>","candidate_score":1,"running_mate":true,"scrollable":false,"partner":"3"}},{"model":"campaign_trail.candidate","pk":1007,"fields":{"first_name":"George","last_name":"McGovern","election":9,"party":"Democratic","state":"South Dakota","priority":1,"description":"<div style='overflow-y:scroll;height:200px;'><p><i>’’I'm fed up to the ears with old men dreaming up wars for young men to die in.’’</i></p><p><p><p>If you really want to burn every single bridge you had with the establishment, then Senator George Stanley McGovern is your guy. A left-wing populist if there ever was one, McGovern, a former Representative, was elected to the Senate during the blue wave in 1962, after previously failing in 1960. In the Senate, his tenure has been characterized by his strong opposition to US involvement in a possible second war in Indochina, with McGovern calling South Vietnam a ‘‘trap we have fallen into’’ in September 1963. He has also advocated for a reduction in the defense budget, voted against investment into the research of new missiles and anti-missiles, and has refused to support providing military aid to other nations. Other than that, not much can be said about his tenure so far; apparently, he has a reputation in the Senate for ‘’not doing his homework’’.</p><p>Look, Frank, you don’t need to be a genius to see why adopting a dovish stance on foreign policy would be a bad idea, especially against someone like Nixon. Yeah, sure, the guy has a strong grassroots organization in South Dakota, and he might help you in some farming states surrounding South Dakota, and maybe in a few of the ultra-liberal states on the Eastern Seaboard, but my God, he would hurt you so badly everywhere else that your campaign would be taken as a practical joke. He’s practically a communist to the people in the South, Frank, and no amount of posturing on Civil Rights can rectify that. If Faubus or Eastland don’t outright run against you for this, you might actually lose the region to a man that signed a goddamned Civil Rights Act. The party might never recover, Frank, I’m being dead serious. Please don’t actually consider him.</p>","color_hex":"#0000ff","secondary_color_hex":null,"is_active":0,"image_url":"https://i.imgur.com/mLeGVlc.jpg","electoral_victory_message":"<h3>REAL PATRIOT DUMMY EXAMPLE SWEEPS</h3>","electoral_loss_message":"<h3>Fake News?</h3>","no_electoral_majority_message":"<h3>DUMMY EXAMPLE RETURNS TO HELL</h3>","description_as_running_mate":"<div style='overflow-y:scroll;height:200px;'><p><i>’’I'm fed up to the ears with old men dreaming up wars for young men to die in.’’</i></p><p><p><p>If you really want to burn every single bridge you had with the establishment, then Senator George Stanley McGovern is your guy. A left-wing populist if there ever was one, McGovern, a former Representative, was elected to the Senate during the blue wave in 1962, after previously failing in 1960. In the Senate, his tenure has been characterized by his strong opposition to US involvement in a possible second war in Indochina, with McGovern calling South Vietnam a ‘‘trap we have fallen into’’ in September 1963. He has also advocated for a reduction in the defense budget, voted against investment into the research of new missiles and anti-missiles, and has refused to support providing military aid to other nations. Other than that, not much can be said about his tenure so far; apparently, he has a reputation in the Senate for ‘’not doing his homework’’.</p><p>Look, Frank, you don’t need to be a genius to see why adopting a dovish stance on foreign policy would be a bad idea, especially against someone like Nixon. Yeah, sure, the guy has a strong grassroots organization in South Dakota, and he might help you in some farming states surrounding South Dakota, and maybe in a few of the ultra-liberal states on the Eastern Seaboard and, but my God, he would hurt you so badly everywhere else that your campaign would be taken as a practical joke. He’s practically a communist to the people in the South, Frank, and no amount of posturing on Civil Rights can rectify that. If Faubus or Eastland don’t outright run against you for this, you might actually lose the region to a man that signed a goddamned Civil Rights Act. The party might never recover, Frank, I’m being dead serious. Please don’t actually consider this bastard.</p>","candidate_score":1,"running_mate":true,"scrollable":false,"partner":"3"}},{"model":"campaign_trail.candidate","pk":79,"fields":{"first_name":"Clarence E. ‘’Pat’’'","last_name":"Manion","election":9,"party":"Independent","state":"Texas","priority":1,"description":"A man against time.","color_hex":"#f28c28","secondary_color_hex":null,"is_active":0,"image_url":"https://i.imgur.com/6FKqT4R.png","electoral_victory_message":"<h3>REAL PATRIOT DUMMY EXAMPLE SWEEPS</h3>","electoral_loss_message":"<h3>Fake News?</h3>","no_electoral_majority_message":"<h3>DUMMY EXAMPLE RETURNS TO HELL</h3>","description_as_running_mate":null,"candidate_score":1,"running_mate":false,"scrollable":false}},{"model":"campaign_trail.candidate","pk":89,"fields":{"first_name":"Clarence E. ‘’Pat’’","last_name":"Manion","election":9,"party":"Independent","state":"Indiana","priority":1,"description":"Wow? A good person","color_hex":"#0000ff","secondary_color_hex":null,"is_active":0,"image_url":"https://i.imgur.com/bXjItmg.jpg","electoral_victory_message":"<h3>REAL PATRIOT DUMMY EXAMPLE SWEEPS</h3>","electoral_loss_message":"<h3>Fake News?</h3>","no_electoral_majority_message":"<h3>DUMMY EXAMPLE RETURNS TO HELL</h3>","description_as_running_mate":"Wow? A good person","candidate_score":1,"running_mate":true,"scrollable":false,"partner":"7"}},{"model":"campaign_trail.candidate","pk":299,"fields":{"first_name":"Other","last_name":"Candidates","election":9,"party":"Other","state":"Other","priority":1,"description":"Other People. Smaller parties.","color_hex":"#74c365","secondary_color_hex":null,"is_active":0,"image_url":"../static/images/barack-obama-2012.jpg","electoral_victory_message":"<h3>REAL PATRIOT DUMMY EXAMPLE SWEEPS</h3>","electoral_loss_message":"<h3>Fake News?</h3>","no_electoral_majority_message":"<h3>DUMMY EXAMPLE RETURNS TO HELL</h3>","description_as_running_mate":null,"candidate_score":1,"running_mate":false,"scrollable":false}},{"model":"campaign_trail.candidate","pk":1011,"fields":{"first_name":"Other","last_name":"Candidates","election":9,"party":"Smaller Party","state":"Smaller","priority":1,"description":"Tiny man","color_hex":"#0000ff","secondary_color_hex":null,"is_active":0,"image_url":"../static/images/barack-obama-2012.jpg","electoral_victory_message":"<h3>REAL PATRIOT DUMMY EXAMPLE SWEEPS</h3>","electoral_loss_message":"<h3>Fake News?</h3>","no_electoral_majority_message":"<h3>DUMMY EXAMPLE RETURNS TO HELL</h3>","description_as_running_mate":"Tiny man","candidate_score":1,"running_mate":true,"scrollable":false,"partner":"9"}}];e.running_mate_json = [{"model":"campaign_trail.running_mate","pk":2001,"fields":{"candidate":77,"running_mate":81}},{"model":"campaign_trail.running_mate","pk":2002,"fields":{"candidate":77,"running_mate":199}},{"model":"campaign_trail.running_mate","pk":2003,"fields":{"candidate":78,"running_mate":85}},{"model":"campaign_trail.running_mate","pk":2004,"fields":{"candidate":78,"running_mate":1006}},{"model":"campaign_trail.running_mate","pk":2005,"fields":{"candidate":78,"running_mate":1007}},{"model":"campaign_trail.running_mate","pk":2006,"fields":{"candidate":79,"running_mate":89}},{"model":"campaign_trail.running_mate","pk":2007,"fields":{"candidate":299,"running_mate":89}}];
+
+campaignTrail_temp.opponents_default_json = JSON.parse("[{\"election\": 20, \"candidates\": [201, 202, 203, 200]},{\"election\": 16, \"candidates\": [167, 168, 166, 165]},{\"election\": 3, \"candidates\": [19, 18, 17, 16]},{\"election\": 9, \"candidates\": [77, 78, 79, 299]},{\"election\": 15, \"candidates\": [154, 155, 152, 153]},{\"election\": 10, \"candidates\": [93, 94, 91, 92]},{\"election\": 4, \"candidates\": [25, 24, 23]},{\"election\": 11, \"candidates\": [107, 105, 106]},{\"election\": 12, \"candidates\": [116, 118, 119, 117]},{\"election\": 14, \"candidates\": [143, 145, 144, 142]},{\"election\": 5, \"candidates\": [22, 20, 21]},{\"election\": 8, \"candidates\": [69, 70, 67, 68]},{\"election\": 13, \"candidates\": [133, 134, 132, 131]}]");
+
+campaignTrail_temp.opponents_weighted_json = JSON.parse("[{\"election\": 20, \"candidates\": [201, 200, 202, 203]},{\"election\": 16, \"candidates\": [165, 166, 167, 168]},{\"election\": 3, \"candidates\": [16, 17, 18, 19]},{\"election\": 9, \"candidates\": [78, 77, 79, 299]},{\"election\": 15, \"candidates\": [153, 152, 154, 155]},{\"election\": 10, \"candidates\": [91, 92, 93]},{\"election\": 4, \"candidates\": [24, 25]},{\"election\": 11, \"candidates\": [105, 106, 107]},{\"election\": 12, \"candidates\": [116, 117, 118, 119]},{\"election\": 14, \"candidates\": [142, 143, 144, 145]},{\"election\": 5, \"candidates\": [21, 20, 22]},{\"election\": 8, \"candidates\": [68, 67, 69, 70]},{\"election\": 13, \"candidates\": [131, 134, 132, 133]}]");        
+
+
+
+HistHexcolour=["#b22b27","#1E48D7","#74C365","#f28c28"]; HistName=[" Richard Nixon"," Frank Clement"," Other Candidates"," Clarence E. ‘’Pat’’ Manion"]; HistEV=[403,118,10,7]; HistPV=["36,618,379","31,893,546","679,582","1,476,483"]; HistPVP=["51.8%","45.1%","1.0%","2.1%"];
+
+var thing = setInterval(() => {
+        if (campaignTrail_temp.candidate_state_multiplier_json && campaignTrail_temp.candidate_state_multiplier_json.map(f=>f.fields.candidate).indexOf(299) < 0) {
+                campaignTrail_temp.opponents_list.pop();
+                window.clearInterval(thing);
+        }
+}, 100);
